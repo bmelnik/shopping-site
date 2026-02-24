@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family ShopList - Collaborative Shopping</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f3f4f6;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+        }
+
+        .item-enter {
+            animation: slideIn 0.4s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .strike-through {
+            position: relative;
+            color: #9ca3af;
+        }
+        .strike-through::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 2px;
+            background: #9ca3af;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+        .checked .strike-through::after {
+            transform: scaleX(1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .category-badge {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 700;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body class="min-h-screen text-slate-800 p-4 md:p-8">
+
+    <!-- Navigation / Header -->
+    <nav class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-2xl shadow-lg shadow-indigo-200">
+                <i class="fa-solid fa-basket-shopping"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Family ShopList</h1>
+                <p class="text-sm text-slate-500 font-semibold">Collaborative Shopping Hub</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
+            <div class="flex -space-x-2 overflow-hidden">
+                <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="Lera" title="Lera">
+                <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Boris" title="Boris">
+                <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" src="https://i.pravatar.cc/150?u=a04258114e29026302d" alt="Elin" title="Elin">
+            </div>
+            <span class="text-sm font-bold text-slate-600">3 Members Online</span>
+        </div>
+    </nav>
+
+    <!-- Main Content Grid -->
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Input & Active Lists (8 cols) -->
+        <div class="lg:col-span-8 space-y-8">
+            
+            <!-- Input Section -->
+            <div class="glass-panel rounded-2xl p-6 card-hover">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-indigo-500"></i> Add New Item
+                </h2>
+                <form id="addItemForm" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div class="md:col-span-4">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Item Name</label>
+                        <input type="text" id="itemName" placeholder="e.g., Milk, Bread..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Qty</label>
+                        <input type="number" id="itemQty" value="1" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Category</label>
+                        <select id="itemCategory" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none">
+                            <option value="Grocery">Grocery</option>
+                            <option value="Household">Household</option>
+                            <option value="Personal">Personal</option>
+                            <option value="Bakery">Bakery</option>
+                            <option value="Frozen">Frozen</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Requester</label>
+                        <select id="itemRequester" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none">
+                            <option value="Lera">Lera</option>
+                            <option value="Boris">Boris</option>
+                            <option value="Elin">Elin</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-12 flex justify-end">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-indigo-200 transition-all transform active:scale-95 flex items-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Add to List
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Active Lists Section -->
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-slate-800">Active Requests</h2>
+                    <span id="activeCount" class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">0 items</span>
+                </div>
+                
+                <div id="activeListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Items injected via JS -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="activeEmptyState" class="hidden flex-col items-center justify-center py-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 text-2xl mb-3">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                    </div>
+                    <h3 class="text-slate-600 font-bold">All caught up!</h3>
+                    <p class="text-slate-400 text-sm">No pending requests. Add something new?</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Ready for Shopping (4 cols) -->
+        <div class="lg:col-span-4">
+            <div class="glass-panel rounded-2xl p-6 h-full min-h-[500px] flex flex-col sticky top-8 border-t-4 border-t-emerald-500">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Ready for Shopping</h2>
+                        <p class="text-xs text-slate-500 font-medium mt-1">Items consolidated for the trip</p>
+                    </div>
+                    <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                    </div>
+                </div>
+
+                <div id="shoppingListContainer" class="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[600px]">
+                    <!-- Shopping items injected via JS -->
+                </div>
+
+                <!-- Shopping Empty State -->
+                <div id="shoppingEmptyState" class="flex flex-col items-center justify-center flex-1 text-center opacity-60">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2038/2038854.png" alt="Empty Cart" class="w-24 h-24 mb-4 opacity-50 grayscale">
+                    <p class="text-slate-500 font-medium">Cart is empty</p>
+                </div>
+
+                <!-- Action Footer -->
+                <div class="mt-6 pt-6 border-t border-slate-100">
+                    <div class="flex justify-between items-center mb-4 text-sm">
+                        <span class="text-slate-500 font-semibold">Total Items:</span>
+                        <span id="totalShoppingCount" class="font-bold text-slate-800 text-lg">0</span>
+                    </div>
+                    <button onclick="app.clearShoppingList()" class="w-full py-3 rounded-xl border-2 border-slate-200 text-slate-400 font-bold hover:border-red-200 hover:text-red-400 hover:bg-red-50 transition-all text-sm">
+                        <i class="fa-solid fa-trash-can mr-2"></i> Clear Completed List
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-8 right-8 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-2xl transform translate-y-24 transition-transform duration-300 flex items-center gap-3 z-50">
+        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toastMessage" class="font-semibold">Action successful</span>
+    </div>
+
+    <script>
+        /**
+         * Application Logic
+         * Handles state management, DOM rendering, and user interactions.
+         * Note: Data is stored in memory (arrays) and will reset on page reload.
+         */
+        const app = (() => {
+            // --- State ---
+            let activeItems = [
+                { id: 1, name: 'Organic Milk', qty: 2, category: 'Grocery', requester: 'Lera', timestamp: Date.now() },
+                { id: 2, name: 'Sourdough Bread', qty: 1, category: 'Bakery', requester: 'Boris', timestamp: Date.now() - 10000 },
+                { id: 3, name: 'Laundry Detergent', qty: 1, category: 'Household', requester: 'Lera', timestamp: Date.now() - 20000 }
+            ];
+
+            let shoppingItems = [
+                { id: 101, name: 'Bananas', qty: 6, category: 'Grocery', requester: 'Elin', checked: false }
+            ];
+
+            // --- Configuration ---
+            const categories = {
+                'Grocery': 'bg-green-100 text-green-700',
+                'Household': 'bg-blue-100 text-blue-700',
+                'Personal': 'bg-purple-100 text-purple-700',
+                'Bakery': 'bg-orange-100 text-orange-700',
+                'Frozen': 'bg-cyan-100 text-cyan-700'
+            };
+
+            const avatars = {
+                'Lera': 'https://i.pravatar.cc/150?u=a042581f4e29026024d',
+                'Boris': 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
+                'Elin': 'https://i.pravatar.cc/150?u=a04258114e29026302d'
+            };
+
+            // --- DOM Elements ---
+            const els = {
+                activeList: document.getElementById('activeListContainer'),
+                shoppingList: document.getElementById('shoppingListContainer'),
+                activeEmpty: document.getElementById('activeEmptyState'),
+                shoppingEmpty: document.getElementById('shoppingEmptyState'),
+                activeCount: document.getElementById('activeCount'),
+                totalShoppingCount: document.getElementById('totalShoppingCount'),
+                form: document.getElementById('addItemForm'),
+                toast: document.getElementById('toast'),
+                toastMsg: document.getElementById('toastMessage')
+            };
+
+            // --- Methods ---
+
+            const init = () => {
+                render();
+                setupListeners();
+            };
+
+            const setupListeners = () => {
+                els.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    addItem();
+                });
+            };
+
+            const addItem = () => {
+                const name = document.getElementById('itemName').value;
+                const qty = parseInt(document.getElementById('itemQty').value);
+                const category = document.getElementById('itemCategory').value;
+                const requester = document.getElementById('itemRequester').value;
+
+                if (!name) return;
+
+                const newItem = {
+                    id: Date.now(),
+                    name,
+                    qty,
+                    category,
+                    requester,
+                    timestamp: Date.now()
+                };
+
+                activeItems.unshift(newItem); // Add to top
+                els.form.reset();
+                document.getElementById('itemQty').value = 1; // Reset qty to default
+                render();
+                showToast(`Added "${name}" to requests`);
+            };
+
+            const moveToShopping = (id) => {
+                const index = activeItems.findIndex(i => i.id === id);
+                if (index > -1) {
+                    const item = activeItems[index];
+                    activeItems.splice(index, 1);
+                    
+                    // Add to shopping list (preserve checked status false initially)
+                    shoppingItems.unshift({ ...item, checked: false });
+                    
+                    render();
+                    showToast('Moved to shopping cart');
+                    
+                    // Confetti effect
+                    confetti({
+                        particleCount: 50,
+                        spread: 60,
+                        origin: { y: 0.7 },
+                        colors: ['#6366f1', '#10b981', '#f59e0b']
+                    });
+                }
+            };
+
+            const deleteActiveItem = (id) => {
+                activeItems = activeItems.filter(i => i.id !== id);
+                render();
+                showToast('Request deleted');
+            };
+
+            const toggleCheck = (id) => {
+                const item = shoppingItems.find(i => i.id === id);
+                if (item) {
+                    item.checked = !item.checked;
+                    render();
+                }
+            };
+
+            const clearShoppingList = () => {
+                if(confirm("Clear all items from the shopping cart?")) {
+                    shoppingItems = [];
+                    render();
+                    showToast('Shopping list cleared');
+                }
+            };
+
+            const showToast = (msg) => {
+                els.toastMsg.innerText = msg;
+                els.toast.classList.remove('translate-y-24');
+                setTimeout(() => {
+                    els.toast.classList.add('translate-y-24');
+                }, 3000);
+            };
+
+            // --- Rendering ---
+
+            const render = () => {
+                // 1. Render Active List
+                els.activeList.innerHTML = '';
+                if (activeItems.length === 0) {
+                    els.activeEmpty.classList.remove('hidden');
+                    els.activeEmpty.classList.add('flex');
+                } else {
+                    els.activeEmpty.classList.add('hidden');
+                    els.activeEmpty.classList.remove('flex');
+                    
+                    activeItems.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all item-enter group relative overflow-hidden';
+                        
+                        const catColor = categories[item.category] || 'bg-slate-100 text-slate-600';
+                        
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="category-badge ${catColor}">${item.category}</span>
+                                <button onclick="app.deleteActiveItem(${item.id})" class="text-slate-300 hover:text-red-400 transition-colors">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-lg mb-1">${item.name}</h3>
+                            <div class="flex justify-between items-end mt-3">
+                                <div class="flex items-center gap-2">
+                                    <img src="${avatars[item.requester]}" class="w-6 h-6 rounded-full" title="Requested by ${item.requester}">
+                                    <span class="text-xs text-slate-400 font-semibold">Qty: ${item.qty}</span>
+                                </div>
+                                <button onclick="app.moveToShopping(${item.id})" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-1">
+                                    Ready <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        `;
+                        els.activeList.appendChild(card);
+                    });
+                }
+                els.activeCount.innerText = `${activeItems.length} items`;
+
+                // 2. Render Shopping List
+                els.shoppingList.innerHTML = '';
+                if (shoppingItems.length === 0) {
+                    els.shoppingEmpty.classList.remove('hidden');
+                    els.shoppingEmpty.classList.add('flex');
+                } else {
+                    els.shoppingEmpty.classList.add('hidden');
+                    els.shoppingEmpty.classList.remove('flex');
+
+                    shoppingItems.forEach(item => {
+                        const row = document.createElement('div');
+                        // Dynamic styling based on checked status
+                        const opacityClass = item.checked ? 'opacity-60 bg-slate-50' : 'bg-white';
+                        const checkIcon = item.checked ? 'fa-check-circle text-emerald-500' : 'fa-circle text-slate-300';
+                        
+                        row.className = `${opacityClass} p-3 rounded-xl border border-slate-100 flex items-center gap-3 transition-all item-enter`;
+                        
+                        row.innerHTML = `
+                            <button onclick="app.toggleCheck(${item.id})" class="text-xl transition-transform active:scale-90 focus:outline-none">
+                                <i class="fa-regular ${checkIcon}"></i>
+                            </button>
+                            <div class="flex-1 min-w-0 ${item.checked ? 'checked' : ''}">
+                                <h4 class="font-bold text-slate-700 text-sm truncate strike-through">${item.name}</h4>
+                                <div class="flex items-center gap-2 text-xs text-slate-400">
+                                    <span>${item.qty}x</span>
+                                    <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                    <span>${item.category}</span>
+                                </div>
+                            </div>
+                            <img src="${avatars[item.requester]}" class="w-8 h-8 rounded-full opacity-80" title="${item.requester}">
+                        `;
+                        els.shoppingList.appendChild(row);
+                    });
+                }
+                els.totalShoppingCount.innerText = shoppingItems.length;
+            };
+
+            // Expose public methods
+            return {
+                init,
+                moveToShopping,
+                deleteActiveItem,
+                toggleCheck,
+                clearShoppingList
+            };
+        })();
+
+        // Start App
+        document.addEventListener('DOMContentLoaded', app.init);
+
+    </script>
+</body>
+</html>
